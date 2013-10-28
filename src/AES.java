@@ -1,3 +1,5 @@
+import java.util.BitSet;
+
 public class AES {
 
 	public static void main(String[] args) {
@@ -56,6 +58,89 @@ public class AES {
 				
 				roundOne[row][3] = movingIndex;
 			}
-	}
+		
+		// shiftColumns
+		
+		String multiplier = "02, 03, 01, 01, 01, 02, 03, 01, 01, 01, 02, 03, 03, 01, 01, 02";
+		String[] multiplierArray = multiplier.replace(" ", "").split(",");
+		
+		// Forming matrix
+		String multiplierMatrix[][] = new String[4][4];
+		
+		for(int row = 0; row < 4; row++)
+			for(int col = 0; col < 4; col++)
+				multiplierMatrix[row][col] = multiplierArray[row * 4 + col];
+		
+		// BitSet to offset carrying of 1s
+		BitSet offset = new BitSet(8);
+		offset.set(0);
+		offset.set(1);
+		offset.set(3);
+		offset.set(4);
+		
+		// String array for storing result
+		int result[] = new int[4];
+		
+		// Converting hexadecimal to bits
+		for(int col = 0; col < 4; col++) 
+		{
+			BitSet dataSum = new BitSet(8);  
+			for(int multiplierRow = 0; multiplierRow < 4; multiplierRow ++) 
+			{
+				for(int row = 0; row < 4; row++)
+				{
+					byte data;
+				    data = (byte) ((Character.digit(roundOne[row][col].charAt(0), 16) << 4) + Character.digit(roundOne[row][col].charAt(1), 16));
+				    
+				    BitSet bits = new BitSet(8);  
+				    for (int i = 0; i < 8; i++)  
+				    {  
+				        bits.set(i, (data & 1) == 1);  
+				        data >>= 1;  
+				    }  
+				    
+			    	BitSet shifted;
+				    if(!multiplierMatrix[multiplierRow][row].equals("01")) {
+				    	shifted = bits.get(0, bits.length());
+				    	for(int shiftBits = 7; shiftBits > 0; shiftBits --) {
+				    		if(shifted.get(shiftBits - 1))
+				    			shifted.set(shiftBits);
+				    		else
+				    			shifted.set(shiftBits, false);
+				    	}
+				    	shifted.set(0, false);
+				    	
+				    	if(bits.get(7))
+				    		shifted.xor(offset);
+					    if(multiplierMatrix[multiplierRow][row].equals("03")) {
+					    	shifted.xor(bits);
+					    }
+					    if(row == 0)
+					    	dataSum = shifted;
+					    else
+					    	dataSum.xor(shifted);
+				    } else {
+				    	if(row == 0)
+					    	dataSum = bits;
+					    else
+					    	dataSum.xor(bits);
+				    }
 
+				}
+				int bitInteger = 0;
+			    for(int i = 0 ; i < 8; i++)
+			        if(dataSum.get(i))
+			            bitInteger |= (1 << i);
+				result[multiplierRow] = bitInteger;
+			}
+			for(int replaceRound = 0; replaceRound < 4; replaceRound++)
+			{
+				String replacement = Integer.toHexString(result[replaceRound]);
+				if(replacement.length() == 1)
+					roundOne[replaceRound][col] = "0" + replacement;
+				else		
+					roundOne[replaceRound][col] = replacement;
+			}
+		}
+	}
 }
