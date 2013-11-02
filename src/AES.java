@@ -113,6 +113,21 @@ public class AES {
 								state = decrypt(state, roundKeys, roundNumber,
 										sBoxMatrix, encrypt);
 						}
+
+						if(!encrypt){
+							String[][] temp = new String[4][4];
+							String[][] state2 = new String[4][4];
+							for(int row = 0; row < 4; row++){
+								for(int col=0; col < 4; col++){
+									temp[col][row] = state[row][col];
+								}
+							}
+							for(int row = 0; row < 4; row++){
+								for(int col=0; col < 4; col++){
+									state[row][col] = temp[row][col];
+								}
+							}
+						}
 						String writer = "";
 						for (int i = 0; i < 4; i++) {
 							for (int j = 0; j < 4; j++)
@@ -324,7 +339,6 @@ public class AES {
 	
 	private static String[][] encrypt(String[][] state, ArrayList<String[]> roundKeys, int roundNumber, String[][] sBoxMatrix, boolean encrypt){
 		state = addRoundKey(state, roundKeys, roundNumber, encrypt);
-		System.out.println(printArray(state));
 		if(roundNumber < 10) {
 			state = subBytes(state, sBoxMatrix);
 			state = shiftRows(state);
@@ -337,20 +351,15 @@ public class AES {
 	
 	private static String[][] decrypt(String[][] state, ArrayList<String[]> roundKeys, int roundNumber, String[][] sBoxMatrix, boolean encrypt){
 		state = addRoundKey(state, roundKeys, roundNumber, encrypt);
-		System.out.println("After addRoundKey("+(10-roundNumber)+")");
-		System.out.println(printArray(state));
 		if(roundNumber < 10) {
 			if(roundNumber != 0) {
 				for(int i=0; i<4; i++)
 					state = invMixColumns(i, state);
-				System.out.println("After mixColumns");
-				System.out.println(printArray(state));
 			}
 			state = invShiftRows(state);
-			state = subBytes(state, sBoxMatrix);
-			System.out.println("After subBytes");
-			System.out.println(printArray(state));
+			state = subBytes(state, sBoxMatrix);;
 		}
+
 		return state;
 	}
 	
